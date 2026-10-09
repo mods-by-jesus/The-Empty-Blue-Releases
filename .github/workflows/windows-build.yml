@@ -84,6 +84,13 @@ jobs:
         run: |
           dotnet publish launcher/TheEmptyBlue.Launcher.csproj -c Release -r win-x64 --self-contained true -o build/launcher
           if ($LASTEXITCODE -ne 0) { throw 'Launcher build failed' }
+      - name: Check exported game startup
+        shell: pwsh
+        run: |
+          $startup = Start-Process -FilePath 'build/game/The Empty Blue.exe' -ArgumentList @('--headless','--quit-after','120','--log-file',"$env:RUNNER_TEMP/startup.log") -Wait -PassThru -NoNewWindow
+          if ($startup.ExitCode -ne 0) { throw 'Exported game failed to start' }
+          if (!(Test-Path "$env:RUNNER_TEMP/startup.log")) { throw 'Exported game did not create its startup log' }
+          if (Select-String -Path "$env:RUNNER_TEMP/startup.log" -Pattern 'SCRIPT ERROR:|Parse Error:') { throw 'Exported game has script errors' }
       - name: Package immutable release
         shell: pwsh
         run: |
@@ -101,10 +108,13 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          gh release view $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY 2>$null
-          if ($LASTEXITCODE -eq 0) { Write-Host 'This version is already published'; exit 0 }
-          gh release create $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --draft --title "The Empty Blue $env:RELEASE_TAG" --notes-file build/release/notes.txt
-          if ($LASTEXITCODE -ne 0) { throw 'Release creation failed' }
+          $draft = gh release view $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --json isDraft --jq '.isDraft' 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            if ($draft -eq 'false') { Write-Host 'This version is already published'; exit 0 }
+          } else {
+            gh release create $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --draft --title "The Empty Blue $env:RELEASE_TAG" --notes-file build/release/notes.txt
+            if ($LASTEXITCODE -ne 0) { throw 'Release creation failed' }
+          }
           gh release upload $env:RELEASE_TAG build/release/Launcher.exe build/release/TheEmptyBlue-Windows-x64.zip build/release/manifest.json --repo $env:GITHUB_REPOSITORY --clobber
           if ($LASTEXITCODE -ne 0) { throw 'Release upload failed (draft remains hidden)' }
           gh release edit $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --draft=false --latest
