@@ -70,7 +70,11 @@ jobs:
         run: |
           & $env:GODOT --headless --path . --editor --import 2>&1 | Tee-Object "$env:RUNNER_TEMP/import.log"
           if ($LASTEXITCODE -ne 0) { throw 'Godot import failed' }
-          if (Select-String -Path "$env:RUNNER_TEMP/import.log" -Pattern 'SCRIPT ERROR:|Parse Error:') { throw 'Godot script parsing failed' }
+          # First import can resolve scripts before new textures/fonts exist.
+          # Validate again against the completed import, without hiding persistent errors.
+          & $env:GODOT --headless --path . --editor --import 2>&1 | Tee-Object "$env:RUNNER_TEMP/validate.log"
+          if ($LASTEXITCODE -ne 0) { throw 'Godot validation failed' }
+          if (Select-String -Path "$env:RUNNER_TEMP/validate.log" -Pattern 'SCRIPT ERROR:|Parse Error:|ERROR: Failed loading resource:') { throw 'Godot script/resource validation failed' }
       - name: Export Windows game
         shell: pwsh
         run: |
