@@ -1,0 +1,111 @@
+name: Windows game and launcher
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: empty-blue-windows
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      GODOT_VERSION: 4.7.2
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout private game (read-only deploy key)
+        uses: actions/checkout@v4
+        with:
+          repository: mods-by-jesus/The-Empty-Blue
+          ref: main
+          ssh-key: ${{ secrets.SOURCE_DEPLOY_KEY }}
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Cache engine and Windows export template only
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/godot
+          key: godot-windows-${{ env.GODOT_VERSION }}-v1
+      - name: Install matching Godot and export template
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tools = Join-Path $env:RUNNER_TEMP 'godot'
+          New-Item -ItemType Directory -Force $tools | Out-Null
+          $base = "https://github.com/godotengine/godot-builds/releases/download/$env:GODOT_VERSION-stable"
+          $engine = Join-Path $tools "Godot_v$env:GODOT_VERSION-stable_win64.exe"
+          if (!(Test-Path $engine)) {
+            Invoke-WebRequest "$base/Godot_v$env:GODOT_VERSION-stable_win64.exe.zip" -OutFile "$env:RUNNER_TEMP/editor.zip"
+            Expand-Archive "$env:RUNNER_TEMP/editor.zip" $tools -Force
+          }
+          $template = Join-Path $tools 'windows_release_x86_64.exe'
+          if (!(Test-Path $template)) {
+            Invoke-WebRequest "$base/Godot_v$env:GODOT_VERSION-stable_export_templates.tpz" -OutFile "$env:RUNNER_TEMP/templates.zip"
+            Add-Type -AssemblyName System.IO.Compression.FileSystem
+            $zip = [System.IO.Compression.ZipFile]::OpenRead("$env:RUNNER_TEMP/templates.zip")
+            try {
+              $entry = $zip.Entries | Where-Object Name -eq 'windows_release_x86_64.exe' | Select-Object -First 1
+              if (!$entry) { throw 'Windows export template missing' }
+              [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $template, $true)
+            } finally { $zip.Dispose() }
+          }
+          $templateDir = Join-Path $env:APPDATA "Godot/export_templates/$env:GODOT_VERSION.stable"
+          New-Item -ItemType Directory -Force $templateDir | Out-Null
+          Copy-Item $template (Join-Path $templateDir 'windows_release_x86_64.exe')
+          "GODOT=$engine" >> $env:GITHUB_ENV
+      - name: Test launcher update safety
+        shell: pwsh
+        run: |
+          dotnet run --project launcher/tests/LauncherTests.csproj -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Launcher tests failed' }
+      - name: Import and validate Godot project
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --editor --import 2>&1 | Tee-Object "$env:RUNNER_TEMP/import.log"
+          if ($LASTEXITCODE -ne 0) { throw 'Godot import failed' }
+          if (Select-String -Path "$env:RUNNER_TEMP/import.log" -Pattern 'SCRIPT ERROR:|Parse Error:') { throw 'Godot script parsing failed' }
+      - name: Export Windows game
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force build/game | Out-Null
+          & $env:GODOT --headless --path . --export-release 'Windows Desktop' 'build/game/The Empty Blue.exe' 2>&1 | Tee-Object "$env:RUNNER_TEMP/export.log"
+          if ($LASTEXITCODE -ne 0) { throw 'Godot export failed' }
+          if (Select-String -Path "$env:RUNNER_TEMP/export.log" -Pattern 'SCRIPT ERROR:|Parse Error:|Export failed') { throw 'Godot export errors' }
+          if (!(Test-Path 'build/game/The Empty Blue.exe')) { throw 'Game executable missing' }
+      - name: Export standalone launcher
+        shell: pwsh
+        run: |
+          dotnet publish launcher/TheEmptyBlue.Launcher.csproj -c Release -r win-x64 --self-contained true -o build/launcher
+          if ($LASTEXITCODE -ne 0) { throw 'Launcher build failed' }
+      - name: Package immutable release
+        shell: pwsh
+        run: |
+          $commit = (git rev-parse HEAD).Trim()
+          $tag = "build-$($commit.Substring(0,12))"
+          New-Item -ItemType Directory -Force build/release | Out-Null
+          Compress-Archive -Path build/game/* -DestinationPath build/release/TheEmptyBlue-Windows-x64.zip
+          Copy-Item build/launcher/TheEmptyBlueLauncher.exe build/release/Launcher.exe
+          $hash = (Get-FileHash build/release/TheEmptyBlue-Windows-x64.zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          @{schema=1;version=$tag;commit=$commit;builtUtc=[DateTime]::UtcNow.ToString('O');fileName='TheEmptyBlue-Windows-x64.zip';sha256=$hash;executable='The Empty Blue.exe'} | ConvertTo-Json | Set-Content build/release/manifest.json -Encoding utf8NoBOM
+          $summary = (git log -1 --format=%s).Trim()
+          "Версия: $($commit.Substring(0,12))`n`n$summary`n`nСкачайте Launcher.exe один раз. Дальнейшие обновления устанавливаются через лаунчер." | Set-Content build/release/notes.txt -Encoding utf8NoBOM
+          "RELEASE_TAG=$tag" >> $env:GITHUB_ENV
+      - name: Publish only completed builds
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          gh release view $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY 2>$null
+          if ($LASTEXITCODE -eq 0) { Write-Host 'This version is already published'; exit 0 }
+          gh release create $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --draft --title "The Empty Blue $env:RELEASE_TAG" --notes-file build/release/notes.txt
+          if ($LASTEXITCODE -ne 0) { throw 'Release creation failed' }
+          gh release upload $env:RELEASE_TAG build/release/Launcher.exe build/release/TheEmptyBlue-Windows-x64.zip build/release/manifest.json --repo $env:GITHUB_REPOSITORY --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'Release upload failed (draft remains hidden)' }
+          gh release edit $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --draft=false --latest
+          if ($LASTEXITCODE -ne 0) { throw 'Release publication failed' }
