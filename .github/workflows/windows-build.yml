@@ -76,6 +76,9 @@ jobs:
           & $env:GODOT --headless --path . --editor --import 2>&1 | Tee-Object "$env:RUNNER_TEMP/validate.log"
           if ($LASTEXITCODE -ne 0) { throw 'Godot validation failed' }
           if (Select-String -Path "$env:RUNNER_TEMP/validate.log" -Pattern 'SCRIPT ERROR:|Parse Error:|ERROR: Failed loading resource:') { throw 'Godot script/resource validation failed' }
+          & $env:GODOT --headless --path . --script res://scripts/tests/AppIconSmoke.gd 2>&1 | Tee-Object "$env:RUNNER_TEMP/app-icon.log"
+          if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/app-icon.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw 'Application icon check failed' }
+          if (!(Select-String -Path "$env:RUNNER_TEMP/app-icon.log" -Pattern 'APP_ICON_SMOKE_OK')) { throw 'Application icon check incomplete' }
       - name: Export Windows game
         shell: pwsh
         run: |
