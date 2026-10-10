@@ -99,6 +99,7 @@ jobs:
         shell: pwsh
         run: |
           ./scripts/distribution/TestLauncherSelfUpdate.ps1 -LauncherPath build/launcher/TheEmptyBlueLauncher.exe
+          ./scripts/distribution/TestLauncherInterface.ps1 -LauncherPath build/launcher/TheEmptyBlueLauncher.exe
       - name: Check exported game startup
         shell: pwsh
         run: |
@@ -131,7 +132,8 @@ jobs:
           $notesRu = $descriptionRu.Notes
           $notesEn = $descriptionEn.Notes
           $buildNumber = [int](git rev-list --count HEAD)
-          @{schema=1;version=$tag;commit=$commit;buildNumber=$buildNumber;builtUtc=[DateTime]::UtcNow.ToString('O');fileName='TheEmptyBlue-Windows-x64.zip';sha256=$hash;executable='The Empty Blue.exe';launcherSha256=$launcherHash;launcherSize=$launcherSize;launcherVersion='2.0.0';notesRu=$notesRu;notesEn=$notesEn;titleRu=$descriptionRu.Title;titleEn=$descriptionEn.Title} | ConvertTo-Json | Set-Content build/release/manifest.json -Encoding utf8NoBOM
+          $launcherVersion = ([xml](Get-Content launcher/TheEmptyBlue.Launcher.csproj -Raw)).Project.PropertyGroup.Version
+          @{schema=1;version=$tag;commit=$commit;buildNumber=$buildNumber;builtUtc=[DateTime]::UtcNow.ToString('O');fileName='TheEmptyBlue-Windows-x64.zip';sha256=$hash;executable='The Empty Blue.exe';launcherSha256=$launcherHash;launcherSize=$launcherSize;launcherVersion=$launcherVersion;notesRu=$notesRu;notesEn=$notesEn;titleRu=$descriptionRu.Title;titleEn=$descriptionEn.Title} | ConvertTo-Json | Set-Content build/release/manifest.json -Encoding utf8NoBOM
           "Версия: v$buildNumber`n`n$notesRu`n`n---`n`n$notesEn" | Set-Content build/release/notes.txt -Encoding utf8NoBOM
           "RELEASE_TAG=$tag" >> $env:GITHUB_ENV
           "BUILD_NUMBER=$buildNumber" >> $env:GITHUB_ENV
