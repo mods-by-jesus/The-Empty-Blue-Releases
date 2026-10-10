@@ -64,6 +64,7 @@ jobs:
       - name: Test launcher update safety
         shell: pwsh
         run: |
+          ./scripts/distribution/TestReleaseDescription.ps1
           dotnet run --project launcher/tests/LauncherTests.csproj -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Launcher tests failed' }
       - name: Import and validate Godot project
@@ -123,13 +124,18 @@ jobs:
           $hash = (Get-FileHash build/release/TheEmptyBlue-Windows-x64.zip -Algorithm SHA256).Hash.ToLowerInvariant()
           $launcherHash = (Get-FileHash build/release/Launcher.exe -Algorithm SHA256).Hash.ToLowerInvariant()
           $launcherSize = (Get-Item build/release/Launcher.exe).Length
-          $notesRu = Get-Content distribution/release-notes.ru.md -Raw
-          $notesEn = Get-Content distribution/release-notes.en.md -Raw
+          $previousCommit = ''
+          try { $previousCommit = (Invoke-RestMethod 'https://github.com/mods-by-jesus/The-Empty-Blue-Releases/releases/latest/download/manifest.json').commit } catch { Write-Host 'No previous manifest available; using curated description' }
+          $descriptionRu = ./scripts/distribution/GetReleaseDescription.ps1 -PreviousCommit $previousCommit -Language ru
+          $descriptionEn = ./scripts/distribution/GetReleaseDescription.ps1 -PreviousCommit $previousCommit -Language en
+          $notesRu = $descriptionRu.Notes
+          $notesEn = $descriptionEn.Notes
           $buildNumber = [int](git rev-list --count HEAD)
-          @{schema=1;version=$tag;commit=$commit;buildNumber=$buildNumber;builtUtc=[DateTime]::UtcNow.ToString('O');fileName='TheEmptyBlue-Windows-x64.zip';sha256=$hash;executable='The Empty Blue.exe';launcherSha256=$launcherHash;launcherSize=$launcherSize;launcherVersion='2.0.0';notesRu=$notesRu;notesEn=$notesEn} | ConvertTo-Json | Set-Content build/release/manifest.json -Encoding utf8NoBOM
+          @{schema=1;version=$tag;commit=$commit;buildNumber=$buildNumber;builtUtc=[DateTime]::UtcNow.ToString('O');fileName='TheEmptyBlue-Windows-x64.zip';sha256=$hash;executable='The Empty Blue.exe';launcherSha256=$launcherHash;launcherSize=$launcherSize;launcherVersion='2.0.0';notesRu=$notesRu;notesEn=$notesEn;titleRu=$descriptionRu.Title;titleEn=$descriptionEn.Title} | ConvertTo-Json | Set-Content build/release/manifest.json -Encoding utf8NoBOM
           "Версия: v$buildNumber`n`n$notesRu`n`n---`n`n$notesEn" | Set-Content build/release/notes.txt -Encoding utf8NoBOM
           "RELEASE_TAG=$tag" >> $env:GITHUB_ENV
           "BUILD_NUMBER=$buildNumber" >> $env:GITHUB_ENV
+          "RELEASE_TITLE=The Empty Blue v$buildNumber — $($descriptionRu.Title)" >> $env:GITHUB_ENV
       - name: Publish only completed builds
         shell: pwsh
         run: |
@@ -138,7 +144,7 @@ jobs:
           if ($LASTEXITCODE -eq 0) {
             if ($draft -eq 'false') { Write-Host 'This version is already published'; exit 0 }
           } else {
-            gh release create $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --draft --title "The Empty Blue v$env:BUILD_NUMBER" --notes-file build/release/notes.txt
+            gh release create $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --draft --title $env:RELEASE_TITLE --notes-file build/release/notes.txt
             if ($LASTEXITCODE -ne 0) { throw 'Release creation failed' }
           }
           gh release upload $env:RELEASE_TAG build/release/Launcher.exe build/release/TheEmptyBlue-Windows-x64.zip build/release/manifest.json --repo $env:GITHUB_REPOSITORY --clobber
