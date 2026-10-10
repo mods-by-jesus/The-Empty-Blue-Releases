@@ -95,7 +95,10 @@ jobs:
           if ($startup.ExitCode -ne 0) { throw 'Exported game failed to start' }
           if (!(Test-Path "$env:RUNNER_TEMP/startup.log")) { throw 'Exported game did not create its startup log' }
           if (Select-String -Path "$env:RUNNER_TEMP/startup.log" -Pattern 'SCRIPT ERROR:|Parse Error:') { throw 'Exported game has script errors' }
-          $effects = Start-Process -FilePath 'build/game/The Empty Blue.exe' -ArgumentList @('--headless','--scene','res://scenes/tests/TechDeviceEffectsSmoke.tscn','--quit-after','600','--log-file',"$env:RUNNER_TEMP/tech-effects.log") -Wait -PassThru -NoNewWindow
+          # Release templates disable scene overrides. Test the exported pack with
+          # the matching editor binary, not loose project files or the release CLI.
+          $exportedGame = (Resolve-Path 'build/game/The Empty Blue.exe').Path
+          $effects = Start-Process -FilePath $env:GODOT -ArgumentList @('--headless','--main-pack',"`"$exportedGame`"",'--scene','res://scenes/tests/TechDeviceEffectsSmoke.tscn','--quit-after','600','--log-file',"`"$env:RUNNER_TEMP/tech-effects.log`"") -Wait -PassThru -NoNewWindow
           if ($effects.ExitCode -ne 0 -or !(Test-Path "$env:RUNNER_TEMP/tech-effects.log")) { throw 'Exported tech device check failed' }
           if (Select-String -Path "$env:RUNNER_TEMP/tech-effects.log" -Pattern 'SCRIPT ERROR:|Parse Error:') { throw 'Exported tech devices have script errors' }
           if (!(Select-String -Path "$env:RUNNER_TEMP/tech-effects.log" -Pattern 'TECH_DEVICE_EFFECTS_SMOKE_OK')) { throw 'Exported tech device effects or activation failed' }
