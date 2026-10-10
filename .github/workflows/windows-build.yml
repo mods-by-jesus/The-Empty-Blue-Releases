@@ -23,6 +23,7 @@ jobs:
         with:
           repository: mods-by-jesus/The-Empty-Blue
           ref: main
+          fetch-depth: 0
           ssh-key: ${{ secrets.SOURCE_DEPLOY_KEY }}
           persist-credentials: false
       - uses: actions/setup-dotnet@v4
@@ -78,8 +79,8 @@ jobs:
       - name: Export Windows game
         shell: pwsh
         run: |
-          $buildCommit = (git rev-parse --short=12 HEAD).Trim()
-          "[build]`ncommit=`"$buildCommit`"" | Set-Content build_version.cfg -Encoding utf8NoBOM
+          $buildNumber = (git rev-list --count HEAD).Trim()
+          "[build]`nnumber=$buildNumber" | Set-Content build_version.cfg -Encoding utf8NoBOM
           New-Item -ItemType Directory -Force build/game | Out-Null
           & $env:GODOT --headless --path . --export-release 'Windows Desktop' 'build/game/The Empty Blue.exe' 2>&1 | Tee-Object "$env:RUNNER_TEMP/export.log"
           if ($LASTEXITCODE -ne 0) { throw 'Godot export failed' }
@@ -113,10 +114,12 @@ jobs:
           Compress-Archive -Path build/game/* -DestinationPath build/release/TheEmptyBlue-Windows-x64.zip
           Copy-Item build/launcher/TheEmptyBlueLauncher.exe build/release/Launcher.exe
           $hash = (Get-FileHash build/release/TheEmptyBlue-Windows-x64.zip -Algorithm SHA256).Hash.ToLowerInvariant()
-          @{schema=1;version=$tag;commit=$commit;builtUtc=[DateTime]::UtcNow.ToString('O');fileName='TheEmptyBlue-Windows-x64.zip';sha256=$hash;executable='The Empty Blue.exe'} | ConvertTo-Json | Set-Content build/release/manifest.json -Encoding utf8NoBOM
+          $buildNumber = [int](git rev-list --count HEAD)
+          @{schema=1;version=$tag;commit=$commit;buildNumber=$buildNumber;builtUtc=[DateTime]::UtcNow.ToString('O');fileName='TheEmptyBlue-Windows-x64.zip';sha256=$hash;executable='The Empty Blue.exe'} | ConvertTo-Json | Set-Content build/release/manifest.json -Encoding utf8NoBOM
           $summary = (git log -1 --format=%s).Trim()
-          "Версия: $($commit.Substring(0,12))`n`n$summary`n`nСкачайте Launcher.exe один раз. Дальнейшие обновления устанавливаются через лаунчер." | Set-Content build/release/notes.txt -Encoding utf8NoBOM
+          "Версия: v$buildNumber`n`n$summary`n`nСкачайте Launcher.exe один раз. Дальнейшие обновления устанавливаются через лаунчер." | Set-Content build/release/notes.txt -Encoding utf8NoBOM
           "RELEASE_TAG=$tag" >> $env:GITHUB_ENV
+          "BUILD_NUMBER=$buildNumber" >> $env:GITHUB_ENV
       - name: Publish only completed builds
         shell: pwsh
         run: |
@@ -125,7 +128,7 @@ jobs:
           if ($LASTEXITCODE -eq 0) {
             if ($draft -eq 'false') { Write-Host 'This version is already published'; exit 0 }
           } else {
-            gh release create $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --draft --title "The Empty Blue $env:RELEASE_TAG" --notes-file build/release/notes.txt
+            gh release create $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --draft --title "The Empty Blue v$env:BUILD_NUMBER" --notes-file build/release/notes.txt
             if ($LASTEXITCODE -ne 0) { throw 'Release creation failed' }
           }
           gh release upload $env:RELEASE_TAG build/release/Launcher.exe build/release/TheEmptyBlue-Windows-x64.zip build/release/manifest.json --repo $env:GITHUB_REPOSITORY --clobber
