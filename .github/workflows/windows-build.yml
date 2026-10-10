@@ -78,6 +78,8 @@ jobs:
       - name: Export Windows game
         shell: pwsh
         run: |
+          $buildCommit = (git rev-parse --short=12 HEAD).Trim()
+          "[build]`ncommit=`"$buildCommit`"" | Set-Content build_version.cfg -Encoding utf8NoBOM
           New-Item -ItemType Directory -Force build/game | Out-Null
           & $env:GODOT --headless --path . --export-release 'Windows Desktop' 'build/game/The Empty Blue.exe' 2>&1 | Tee-Object "$env:RUNNER_TEMP/export.log"
           if ($LASTEXITCODE -ne 0) { throw 'Godot export failed' }
