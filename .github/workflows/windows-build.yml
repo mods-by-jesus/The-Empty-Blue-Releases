@@ -105,6 +105,19 @@ jobs:
           ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/equipment-ui.log" -Arguments @('--headless','--path','.','--scene','res://scenes/tests/EquipmentInterfaceSmoke.tscn')
           if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/equipment-ui.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw 'Equipment interface check failed' }
           if (!(Select-String -Path "$env:RUNNER_TEMP/equipment-ui.log" -Pattern 'EquipmentInterfaceSmoke PASS')) { throw 'Equipment interface check incomplete' }
+          $performanceChecks = @{
+            'LoadedCrewDeckPerformanceSmoke' = 'LOADED_CREW_DECK_PERFORMANCE_SMOKE_OK'
+            'WarehousePerformanceSmoke' = 'WAREHOUSE_PERFORMANCE_SMOKE_OK'
+            'PropellerMaskPerformanceSmoke' = 'PROPELLER_MASK_PERFORMANCE_SMOKE_OK'
+            'RuntimeHotspotsSmoke' = 'RUNTIME_HOTSPOTS_SMOKE_OK'
+            'CrewWorkerQuerySmoke' = 'CREW_WORKER_QUERY_SMOKE_OK'
+            'WindMapCacheSmoke' = 'WIND_MAP_CACHE_SMOKE_OK'
+          }
+          foreach ($check in $performanceChecks.GetEnumerator()) {
+            $log = "$env:RUNNER_TEMP/$($check.Key).log"
+            ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath $log -Arguments @('--headless','--path','.','--scene',"res://scenes/tests/$($check.Key).tscn")
+            if (!(Select-String -Path $log -Pattern $check.Value)) { throw "Performance regression check incomplete: $($check.Key)" }
+          }
       - name: Export Windows game
         shell: pwsh
         run: |
