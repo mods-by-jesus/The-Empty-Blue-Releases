@@ -100,6 +100,8 @@ jobs:
           if (!(Select-String -Path "$env:RUNNER_TEMP/towing-net.log" -Pattern 'TowingNetSmoke PASS')) { throw 'Towing net check incomplete' }
           ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/simultaneous-fishing.log" -Arguments @('--headless','--path','.','--scene','res://scenes/tests/SimultaneousFishingSmoke.tscn')
           if (!(Select-String -Path "$env:RUNNER_TEMP/simultaneous-fishing.log" -Pattern 'SimultaneousFishingSmoke PASS')) { throw 'Simultaneous fishing check incomplete' }
+          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/crew-starvation.log" -Arguments @('--headless','--path','.','--scene','res://scenes/tests/CrewStarvationSmoke.tscn')
+          if (!(Select-String -Path "$env:RUNNER_TEMP/crew-starvation.log" -Pattern 'CrewStarvationSmoke PASS')) { throw 'Crew starvation check incomplete' }
           ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/equipment-ui.log" -Arguments @('--headless','--path','.','--scene','res://scenes/tests/EquipmentInterfaceSmoke.tscn')
           if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/equipment-ui.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw 'Equipment interface check failed' }
           if (!(Select-String -Path "$env:RUNNER_TEMP/equipment-ui.log" -Pattern 'EquipmentInterfaceSmoke PASS')) { throw 'Equipment interface check incomplete' }
