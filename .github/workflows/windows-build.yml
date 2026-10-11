@@ -71,7 +71,10 @@ jobs:
         shell: pwsh
         run: |
           & $env:GODOT --headless --path . --editor --import 2>&1 | Tee-Object "$env:RUNNER_TEMP/import.log"
-          if ($LASTEXITCODE -ne 0) { throw 'Godot import failed' }
+          # On a clean checkout the project theme can load before its font is
+          # imported. Godot still completes asset import, but returns nonzero.
+          # Always run the strict second pass against the populated cache.
+          if ($LASTEXITCODE -ne 0) { Write-Warning "Initial import returned $LASTEXITCODE; validating after asset bootstrap" }
           # First import can resolve scripts before new textures/fonts exist.
           # Validate again against the completed import, without hiding persistent errors.
           & $env:GODOT --headless --path . --editor --import 2>&1 | Tee-Object "$env:RUNNER_TEMP/validate.log"
