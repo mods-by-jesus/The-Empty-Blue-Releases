@@ -60,7 +60,11 @@ jobs:
           $templateDir = Join-Path $env:APPDATA "Godot/export_templates/$env:GODOT_VERSION.stable"
           New-Item -ItemType Directory -Force $templateDir | Out-Null
           Copy-Item $template (Join-Path $templateDir 'windows_release_x86_64.exe')
-          "GODOT=$engine" >> $env:GITHUB_ENV
+          # Use the console entry point for piped CI output and synchronous exit
+          # status. Keep the GUI binary installed beside its console wrapper.
+          $consoleEngine = Join-Path $tools "Godot_v$env:GODOT_VERSION-stable_win64_console.exe"
+          if (!(Test-Path $consoleEngine)) { throw 'Godot console entry point missing' }
+          "GODOT=$consoleEngine" >> $env:GITHUB_ENV
       - name: Test launcher update safety
         shell: pwsh
         run: |
