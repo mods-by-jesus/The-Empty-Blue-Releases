@@ -86,6 +86,9 @@ jobs:
           & $env:GODOT --headless --path . --scene res://scenes/tests/FishingEquipmentSmoke.tscn 2>&1 | Tee-Object "$env:RUNNER_TEMP/fishing-equipment.log"
           if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/fishing-equipment.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw 'Fishing/equipment check failed' }
           if (!(Select-String -Path "$env:RUNNER_TEMP/fishing-equipment.log" -Pattern 'FishingEquipmentSmoke PASS')) { throw 'Fishing/equipment check incomplete' }
+          & $env:GODOT --headless --path . --scene res://scenes/tests/TwilightRibbonfishSmoke.tscn 2>&1 | Tee-Object "$env:RUNNER_TEMP/twilight-ribbonfish.log"
+          if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/twilight-ribbonfish.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw 'Twilight Ribbonfish check failed' }
+          if (!(Select-String -Path "$env:RUNNER_TEMP/twilight-ribbonfish.log" -Pattern 'TWILIGHT_RIBBONFISH_SMOKE_OK')) { throw 'Twilight Ribbonfish check incomplete' }
       - name: Export Windows game
         shell: pwsh
         run: |
