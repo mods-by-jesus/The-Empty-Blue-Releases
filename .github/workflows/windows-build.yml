@@ -81,25 +81,24 @@ jobs:
           if ($LASTEXITCODE -ne 0) { Write-Warning "Initial import returned $LASTEXITCODE; validating after asset bootstrap" }
           # First import can resolve scripts before new textures/fonts exist.
           # Validate again against the completed import, without hiding persistent errors.
-          & $env:GODOT --headless --path . --editor --import 2>&1 | Tee-Object "$env:RUNNER_TEMP/validate.log"
-          if ($LASTEXITCODE -ne 0) { throw 'Godot validation failed' }
+          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/validate.log" -Arguments @('--headless','--path','.','--editor','--import')
           if (Select-String -Path "$env:RUNNER_TEMP/validate.log" -Pattern 'SCRIPT ERROR:|Parse Error:|ERROR: Failed loading resource:') { throw 'Godot script/resource validation failed' }
-          & $env:GODOT --headless --path . --script res://scripts/tests/AppIconSmoke.gd 2>&1 | Tee-Object "$env:RUNNER_TEMP/app-icon.log"
+          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/app-icon.log" -Arguments @('--headless','--path','.','--script','res://scripts/tests/AppIconSmoke.gd')
           if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/app-icon.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw "Application icon check failed (engine exit: $LASTEXITCODE)" }
           if (!(Select-String -Path "$env:RUNNER_TEMP/app-icon.log" -Pattern 'APP_ICON_SMOKE_OK')) { throw 'Application icon check incomplete' }
-          & $env:GODOT --headless --path . --script res://scripts/tests/PauseSettingsMotionSmoke.gd 2>&1 | Tee-Object "$env:RUNNER_TEMP/pause-settings.log"
+          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/pause-settings.log" -Arguments @('--headless','--path','.','--script','res://scripts/tests/PauseSettingsMotionSmoke.gd')
           if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/pause-settings.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw 'Pause settings check failed' }
           if (!(Select-String -Path "$env:RUNNER_TEMP/pause-settings.log" -Pattern 'PAUSE_SETTINGS_MOTION_SMOKE_OK')) { throw 'Pause settings check incomplete' }
-          & $env:GODOT --headless --path . --scene res://scenes/tests/FishingEquipmentSmoke.tscn 2>&1 | Tee-Object "$env:RUNNER_TEMP/fishing-equipment.log"
+          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/fishing-equipment.log" -Arguments @('--headless','--path','.','--scene','res://scenes/tests/FishingEquipmentSmoke.tscn')
           if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/fishing-equipment.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw 'Fishing/equipment check failed' }
           if (!(Select-String -Path "$env:RUNNER_TEMP/fishing-equipment.log" -Pattern 'FishingEquipmentSmoke PASS')) { throw 'Fishing/equipment check incomplete' }
-          & $env:GODOT --headless --path . --scene res://scenes/tests/TwilightRibbonfishSmoke.tscn 2>&1 | Tee-Object "$env:RUNNER_TEMP/twilight-ribbonfish.log"
+          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/twilight-ribbonfish.log" -Arguments @('--headless','--path','.','--scene','res://scenes/tests/TwilightRibbonfishSmoke.tscn')
           if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/twilight-ribbonfish.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw 'Twilight Ribbonfish check failed' }
           if (!(Select-String -Path "$env:RUNNER_TEMP/twilight-ribbonfish.log" -Pattern 'TWILIGHT_RIBBONFISH_SMOKE_OK')) { throw 'Twilight Ribbonfish check incomplete' }
-          & $env:GODOT --headless --path . --scene res://scenes/tests/TowingNetSmoke.tscn 2>&1 | Tee-Object "$env:RUNNER_TEMP/towing-net.log"
+          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/towing-net.log" -Arguments @('--headless','--path','.','--scene','res://scenes/tests/TowingNetSmoke.tscn')
           if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/towing-net.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw 'Towing net check failed' }
           if (!(Select-String -Path "$env:RUNNER_TEMP/towing-net.log" -Pattern 'TowingNetSmoke PASS')) { throw 'Towing net check incomplete' }
-          & $env:GODOT --headless --path . --scene res://scenes/tests/EquipmentInterfaceSmoke.tscn 2>&1 | Tee-Object "$env:RUNNER_TEMP/equipment-ui.log"
+          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/equipment-ui.log" -Arguments @('--headless','--path','.','--scene','res://scenes/tests/EquipmentInterfaceSmoke.tscn')
           if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/equipment-ui.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw 'Equipment interface check failed' }
           if (!(Select-String -Path "$env:RUNNER_TEMP/equipment-ui.log" -Pattern 'EquipmentInterfaceSmoke PASS')) { throw 'Equipment interface check incomplete' }
       - name: Export Windows game
@@ -108,7 +107,7 @@ jobs:
           $buildNumber = (git rev-list --count HEAD).Trim()
           "[build]`nnumber=$buildNumber" | Set-Content build_version.cfg -Encoding utf8NoBOM
           New-Item -ItemType Directory -Force build/game | Out-Null
-          & $env:GODOT --headless --path . --export-release 'Windows Desktop' 'build/game/The Empty Blue.exe' 2>&1 | Tee-Object "$env:RUNNER_TEMP/export.log"
+          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/export.log" -Arguments @('--headless','--path','.','--export-release','Windows Desktop','build/game/The Empty Blue.exe')
           if ($LASTEXITCODE -ne 0) { throw 'Godot export failed' }
           if (Select-String -Path "$env:RUNNER_TEMP/export.log" -Pattern 'SCRIPT ERROR:|Parse Error:|Export failed') { throw 'Godot export errors' }
           if (!(Test-Path 'build/game/The Empty Blue.exe')) { throw 'Game executable missing' }
