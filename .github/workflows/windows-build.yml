@@ -89,6 +89,12 @@ jobs:
           & $env:GODOT --headless --path . --scene res://scenes/tests/TwilightRibbonfishSmoke.tscn 2>&1 | Tee-Object "$env:RUNNER_TEMP/twilight-ribbonfish.log"
           if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/twilight-ribbonfish.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw 'Twilight Ribbonfish check failed' }
           if (!(Select-String -Path "$env:RUNNER_TEMP/twilight-ribbonfish.log" -Pattern 'TWILIGHT_RIBBONFISH_SMOKE_OK')) { throw 'Twilight Ribbonfish check incomplete' }
+          & $env:GODOT --headless --path . --scene res://scenes/tests/TowingNetSmoke.tscn 2>&1 | Tee-Object "$env:RUNNER_TEMP/towing-net.log"
+          if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/towing-net.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw 'Towing net check failed' }
+          if (!(Select-String -Path "$env:RUNNER_TEMP/towing-net.log" -Pattern 'TowingNetSmoke PASS')) { throw 'Towing net check incomplete' }
+          & $env:GODOT --headless --path . --scene res://scenes/tests/EquipmentInterfaceSmoke.tscn 2>&1 | Tee-Object "$env:RUNNER_TEMP/equipment-ui.log"
+          if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/equipment-ui.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw 'Equipment interface check failed' }
+          if (!(Select-String -Path "$env:RUNNER_TEMP/equipment-ui.log" -Pattern 'EquipmentInterfaceSmoke PASS')) { throw 'Equipment interface check incomplete' }
       - name: Export Windows game
         shell: pwsh
         run: |
