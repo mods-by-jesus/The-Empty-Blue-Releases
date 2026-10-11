@@ -83,6 +83,9 @@ jobs:
           & $env:GODOT --headless --path . --script res://scripts/tests/PauseSettingsMotionSmoke.gd 2>&1 | Tee-Object "$env:RUNNER_TEMP/pause-settings.log"
           if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/pause-settings.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw 'Pause settings check failed' }
           if (!(Select-String -Path "$env:RUNNER_TEMP/pause-settings.log" -Pattern 'PAUSE_SETTINGS_MOTION_SMOKE_OK')) { throw 'Pause settings check incomplete' }
+          & $env:GODOT --headless --path . --scene res://scenes/tests/FishingEquipmentSmoke.tscn 2>&1 | Tee-Object "$env:RUNNER_TEMP/fishing-equipment.log"
+          if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/fishing-equipment.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw 'Fishing/equipment check failed' }
+          if (!(Select-String -Path "$env:RUNNER_TEMP/fishing-equipment.log" -Pattern 'FishingEquipmentSmoke PASS')) { throw 'Fishing/equipment check incomplete' }
       - name: Export Windows game
         shell: pwsh
         run: |
