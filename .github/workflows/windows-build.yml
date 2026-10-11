@@ -80,6 +80,9 @@ jobs:
           & $env:GODOT --headless --path . --script res://scripts/tests/AppIconSmoke.gd 2>&1 | Tee-Object "$env:RUNNER_TEMP/app-icon.log"
           if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/app-icon.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw "Application icon check failed (engine exit: $LASTEXITCODE)" }
           if (!(Select-String -Path "$env:RUNNER_TEMP/app-icon.log" -Pattern 'APP_ICON_SMOKE_OK')) { throw 'Application icon check incomplete' }
+          & $env:GODOT --headless --path . --script res://scripts/tests/PauseSettingsMotionSmoke.gd 2>&1 | Tee-Object "$env:RUNNER_TEMP/pause-settings.log"
+          if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/pause-settings.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw 'Pause settings check failed' }
+          if (!(Select-String -Path "$env:RUNNER_TEMP/pause-settings.log" -Pattern 'PAUSE_SETTINGS_MOTION_SMOKE_OK')) { throw 'Pause settings check incomplete' }
       - name: Export Windows game
         shell: pwsh
         run: |
