@@ -151,7 +151,10 @@ jobs:
         run: |
           $buildNumber = (git rev-list --count HEAD).Trim()
           $sourceCommit = (git rev-parse HEAD).Trim()
-          "[build]`nnumber=$buildNumber`nsource_commit=$sourceCommit" | Set-Content build_version.cfg -Encoding utf8NoBOM
+          ./scripts/distribution/TestBuildVersion.ps1 -GodotPath $env:GODOT
+          ./scripts/distribution/WriteBuildVersion.ps1 -BuildNumber $buildNumber -SourceCommit $sourceCommit
+          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/build-version.log" -Arguments @('--headless','--path','.','--script','res://scripts/tests/BuildVersionSmoke.gd','--quit-after','120','--',"--expected-source=$sourceCommit","--expected-number=$buildNumber")
+          if (!(Select-String -Path "$env:RUNNER_TEMP/build-version.log" -SimpleMatch 'BUILD_VERSION_SMOKE_OK')) { throw 'Build metadata validation incomplete' }
           New-Item -ItemType Directory -Force build/game | Out-Null
           ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/export.log" -Arguments @('--headless','--path','.','--export-release','Windows Desktop','build/game/The Empty Blue.exe')
           if ($LASTEXITCODE -ne 0) { throw 'Godot export failed' }
