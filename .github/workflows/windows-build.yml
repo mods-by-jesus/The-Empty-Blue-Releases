@@ -160,7 +160,9 @@ jobs:
       - name: Verify exported cooperative world
         shell: pwsh
         run: |
-          ./scripts/distribution/TestCoop.ps1 -GodotPath (Resolve-Path 'build/game/The Empty Blue.exe').Path -LogDirectory "$env:RUNNER_TEMP/coop-export" -Port 24891
+          # Release templates reject --scene overrides. Run the actual exported
+          # resources/bytecode through the matching engine, as with tech effects.
+          ./scripts/distribution/TestCoop.ps1 -GodotPath $env:GODOT -MainPack (Resolve-Path 'build/game/The Empty Blue.exe').Path -LogDirectory "$env:RUNNER_TEMP/coop-export" -Port 24891
       - name: Export standalone launcher
         shell: pwsh
         run: |
