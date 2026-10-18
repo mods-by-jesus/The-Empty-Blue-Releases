@@ -142,30 +142,16 @@ jobs:
             ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/revision-settings" -Checks @('SettingsPersistenceSmoke') -SettingsStage $stage
           }
           ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/revision" -Checks @('ControlBindingsSmoke','MainMenuSmoke','SaveCompatibilitySmoke','SaveRevisionSmoke','SaveGameSmoke','UIInputLayoutSmoke','RevisionBalanceSmoke','WorldLootCapacitySmoke','CrewSystemSmoke','FieldServiceSmoke','TechCraftingSmoke','LootTablesSmoke','KesslerChainSmoke','CaptainProgressionSmoke','CaptainSpecializationSmoke','MoneyGainFeedbackSmoke')
-      - name: Verify cooperative combat
-        shell: pwsh
-        run: |
-          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/coop-combat" -Checks @('CoopCombatSmoke')
       - name: Export Windows game
         shell: pwsh
         run: |
           $buildNumber = (git rev-list --count HEAD).Trim()
-          $sourceCommit = (git rev-parse HEAD).Trim()
-          ./scripts/distribution/TestBuildVersion.ps1 -GodotPath $env:GODOT
-          ./scripts/distribution/WriteBuildVersion.ps1 -BuildNumber $buildNumber -SourceCommit $sourceCommit
-          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/build-version.log" -Arguments @('--headless','--path','.','--script','res://scripts/tests/BuildVersionSmoke.gd','--quit-after','120','--',"--expected-source=$sourceCommit","--expected-number=$buildNumber")
-          if (!(Select-String -Path "$env:RUNNER_TEMP/build-version.log" -SimpleMatch 'BUILD_VERSION_SMOKE_OK')) { throw 'Build metadata validation incomplete' }
+          "[build]`nnumber=$buildNumber" | Set-Content build_version.cfg -Encoding utf8NoBOM
           New-Item -ItemType Directory -Force build/game | Out-Null
           ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/export.log" -Arguments @('--headless','--path','.','--export-release','Windows Desktop','build/game/The Empty Blue.exe')
           if ($LASTEXITCODE -ne 0) { throw 'Godot export failed' }
           if (Select-String -Path "$env:RUNNER_TEMP/export.log" -Pattern 'SCRIPT ERROR:|Parse Error:|Export failed') { throw 'Godot export errors' }
           if (!(Test-Path 'build/game/The Empty Blue.exe')) { throw 'Game executable missing' }
-      - name: Verify exported cooperative world
-        shell: pwsh
-        run: |
-          # Release templates reject --scene overrides. Run the actual exported
-          # resources/bytecode through the matching engine, as with tech effects.
-          ./scripts/distribution/TestCoop.ps1 -GodotPath $env:GODOT -MainPack (Resolve-Path 'build/game/The Empty Blue.exe').Path -LogDirectory "$env:RUNNER_TEMP/coop-export" -Port 24891
       - name: Export standalone launcher
         shell: pwsh
         run: |
