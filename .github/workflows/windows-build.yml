@@ -152,7 +152,7 @@ jobs:
           foreach ($stage in @('seed','verify','verify','verify','cleanup')) {
             ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/revision-settings" -Checks @('SettingsPersistenceSmoke') -SettingsStage $stage
           }
-          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/revision" -Checks @('ControlBindingsSmoke','MainMenuSmoke','SaveCompatibilitySmoke','SaveRevisionSmoke','SaveGameSmoke','UIInputLayoutSmoke','RevisionBalanceSmoke','WorldLootCapacitySmoke','CrewSystemSmoke','FieldServiceSmoke','TechCraftingSmoke','LootTablesSmoke','KesslerChainSmoke','CaptainProgressionSmoke','CaptainSpecializationSmoke','CaptainActiveSkillsSmoke','SkillDriveRecoverySmoke','SkillEditorSmoke','MoneyGainFeedbackSmoke')
+          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/revision" -Checks @('ControlBindingsSmoke','MainMenuSmoke','SaveCompatibilitySmoke','SaveRevisionSmoke','SaveGameSmoke','UIInputLayoutSmoke','RevisionBalanceSmoke','WorldLootCapacitySmoke','CrewSystemSmoke','FieldServiceSmoke','TechCraftingSmoke','LootTablesSmoke','KesslerChainSmoke','CaptainProgressionSmoke','CaptainSpecializationSmoke','CaptainActiveSkillsSmoke','SkillDriveRecoverySmoke','SkillEditorSmoke','SpecializationStatsSmoke','MoneyGainFeedbackSmoke')
       - name: Export Windows game
         shell: pwsh
         run: |
