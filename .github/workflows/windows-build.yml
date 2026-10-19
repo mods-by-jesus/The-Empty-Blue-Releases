@@ -81,6 +81,15 @@ jobs:
           $consoleEngine = Join-Path $tools "Godot_v$env:GODOT_VERSION-stable_win64_console.exe"
           if (!(Test-Path $consoleEngine)) { throw 'Godot console entry point missing' }
           "GODOT=$consoleEngine" >> $env:GITHUB_ENV
+      - name: Set up statistics test runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test private statistics access and counters
+        shell: pwsh
+        run: |
+          node --test services/statistics/test/statistics.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'Private statistics checks failed' }
       - name: Test launcher update safety
         shell: pwsh
         run: |
@@ -105,6 +114,8 @@ jobs:
           ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/pause-settings.log" -Arguments @('--headless','--path','.','--script','res://scripts/tests/PauseSettingsMotionSmoke.gd')
           if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/pause-settings.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw 'Pause settings check failed' }
           if (!(Select-String -Path "$env:RUNNER_TEMP/pause-settings.log" -Pattern 'PAUSE_SETTINGS_MOTION_SMOKE_OK')) { throw 'Pause settings check incomplete' }
+          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/game-telemetry.log" -Arguments @('--headless','--path','.','--script','res://scripts/tests/GameTelemetrySmoke.gd')
+          if (!(Select-String -Path "$env:RUNNER_TEMP/game-telemetry.log" -Pattern 'GAME_TELEMETRY_SMOKE_OK')) { throw 'Game statistics client check incomplete' }
           ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/fishing-equipment.log" -Arguments @('--headless','--path','.','--scene','res://scenes/tests/FishingEquipmentSmoke.tscn')
           if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/fishing-equipment.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw 'Fishing/equipment check failed' }
           if (!(Select-String -Path "$env:RUNNER_TEMP/fishing-equipment.log" -Pattern 'FishingEquipmentSmoke PASS')) { throw 'Fishing/equipment check incomplete' }
