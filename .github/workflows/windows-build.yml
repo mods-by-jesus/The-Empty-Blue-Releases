@@ -160,7 +160,7 @@ jobs:
       - name: Test cooperative session foundation
         shell: pwsh
         run: |
-          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/coop" -Checks @('CoopFoundationSmoke')
+          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/coop" -Checks @('CoopFoundationSmoke','CoopShipOwnershipSmoke','BoardingSmoke','CrewMoodSmoke','CrewRelationshipsSmoke')
           ./scripts/distribution/TestCoopTransport.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/coop-processes"
       - name: Export Windows game
         shell: pwsh
