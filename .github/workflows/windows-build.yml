@@ -162,6 +162,10 @@ jobs:
         run: |
           ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/coop" -Checks @('CoopFoundationSmoke','CoopShipOwnershipSmoke','BoardingSmoke','CrewMoodSmoke','CrewRelationshipsSmoke')
           ./scripts/distribution/TestCoopTransport.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/coop-processes"
+      - name: Test non-destructive icon presentation
+        shell: pwsh
+        run: |
+          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/icon-palette" -Checks @('IconPaletteSmoke')
       - name: Export Windows game
         shell: pwsh
         run: |
