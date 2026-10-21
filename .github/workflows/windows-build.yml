@@ -157,11 +157,17 @@ jobs:
             ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/revision-settings" -Checks @('SettingsPersistenceSmoke') -SettingsStage $stage
           }
           ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/revision" -Checks @('ControlBindingsSmoke','MainMenuSmoke','SaveCompatibilitySmoke','SaveRevisionSmoke','SaveGameSmoke','UIInputLayoutSmoke','RevisionBalanceSmoke','WorldLootCapacitySmoke','CrewSystemSmoke','FieldServiceSmoke','TechCraftingSmoke','LootTablesSmoke','KesslerChainSmoke','CaptainProgressionSmoke','CaptainSpecializationSmoke','CaptainActiveSkillsSmoke','SkillDriveRecoverySmoke','SkillEditorSmoke','SpecializationStatsSmoke','MoneyGainFeedbackSmoke')
+      - name: Test cooperative session foundation
+        shell: pwsh
+        run: |
+          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/coop" -Checks @('CoopFoundationSmoke')
+          ./scripts/distribution/TestCoopTransport.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/coop-processes"
       - name: Export Windows game
         shell: pwsh
         run: |
           $buildNumber = (git rev-list --count HEAD).Trim()
-          "[build]`nnumber=$buildNumber" | Set-Content build_version.cfg -Encoding utf8NoBOM
+          $sourceCommit = (git rev-parse HEAD).Trim()
+          "[build]`nnumber=$buildNumber`nsource_commit=`"$sourceCommit`"" | Set-Content build_version.cfg -Encoding utf8NoBOM
           New-Item -ItemType Directory -Force build/game | Out-Null
           ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/export.log" -Arguments @('--headless','--path','.','--export-release','Windows Desktop','build/game/The Empty Blue.exe')
           if ($LASTEXITCODE -ne 0) { throw 'Godot export failed' }
