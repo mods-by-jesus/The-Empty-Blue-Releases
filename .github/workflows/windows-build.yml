@@ -165,7 +165,7 @@ jobs:
       - name: Test non-destructive icon presentation
         shell: pwsh
         run: |
-          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/icon-palette" -Checks @('IconPaletteSmoke')
+          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/icon-palette" -Checks @('IconPaletteSmoke','DriftingChestSmoke')
       - name: Export Windows game
         shell: pwsh
         run: |
