@@ -169,6 +169,10 @@ jobs:
         shell: pwsh
         run: |
           ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/freecam" -Checks @('FreeCameraMarkersSmoke','ConsoleCompletionSmoke','DevConsoleSmoke','WindMapCacheSmoke')
+      - name: Test treasure chest experience
+        shell: pwsh
+        run: |
+          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/chest-xp" -Checks @('ChestExperienceSmoke','DriftingChestSmoke','ChestAuthoringSmoke','CaptainProgressionSmoke')
       - name: Test cooperative session foundation
         shell: pwsh
         run: |
