@@ -94,6 +94,7 @@ jobs:
         shell: pwsh
         run: |
           ./scripts/distribution/TestReleaseDescription.ps1
+          ./scripts/distribution/TestItchPublishing.ps1
           dotnet run --project launcher/tests/LauncherTests.csproj -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Launcher tests failed' }
       - name: Import and validate Godot project
@@ -260,3 +261,25 @@ jobs:
         shell: pwsh
         run: |
           ./scripts/distribution/VerifyPublishedRelease.ps1 -Repository $env:GITHUB_REPOSITORY -Tag $env:RELEASE_TAG -ExpectedCommit (git rev-parse HEAD).Trim()
+      - name: Publish the verified Windows archive to itch.io
+        shell: pwsh
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrWhiteSpace($env:BUTLER_API_KEY)) {
+            Write-Warning 'itch.io upload is not enabled: add the BUTLER_API_KEY Actions secret to this release repository.'
+            exit 0
+          }
+          $butlerDirectory = Join-Path $env:RUNNER_TEMP 'itch-butler'
+          $butlerArchive = Join-Path $env:RUNNER_TEMP 'itch-butler.zip'
+          Invoke-WebRequest 'https://broth.itch.zone/butler/windows-amd64/LATEST/archive/default' -OutFile $butlerArchive
+          Expand-Archive -LiteralPath $butlerArchive -DestinationPath $butlerDirectory -Force
+          ./scripts/distribution/PublishItchBuild.ps1 -ArchivePath build/release/TheEmptyBlue-Windows-x64.zip -ManifestPath build/release/manifest.json -ExpectedCommit (git rev-parse HEAD).Trim() -ButlerPath (Join-Path $butlerDirectory 'butler.exe')
+          for ($attempt = 0; $attempt -lt 6; $attempt++) {
+            $latest = Invoke-RestMethod 'https://api.itch.io/wharf/latest?target=jesus-team/the-empty-blue&channel_name=windows'
+            if ($latest.latest -eq $env:RELEASE_TAG) { break }
+            if ($attempt -lt 5) { Start-Sleep -Seconds 5 }
+          }
+          if ($latest.latest -ne $env:RELEASE_TAG) { throw 'itch.io channel version does not match the published release' }
+          Write-Host "ITCH_PUBLISHED_OK version=$env:RELEASE_TAG"
