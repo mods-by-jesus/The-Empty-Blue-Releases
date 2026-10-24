@@ -165,6 +165,10 @@ jobs:
         shell: pwsh
         run: |
           ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/weather-console" -Checks @('GlobalWeatherConsoleSmoke','DayNightConsoleSmoke')
+      - name: Test free camera markers and console help
+        shell: pwsh
+        run: |
+          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/freecam" -Checks @('FreeCameraMarkersSmoke','DevConsoleSmoke','WindMapCacheSmoke')
       - name: Test cooperative session foundation
         shell: pwsh
         run: |
