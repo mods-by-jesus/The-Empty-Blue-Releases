@@ -157,6 +157,10 @@ jobs:
             ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/revision-settings" -Checks @('SettingsPersistenceSmoke') -SettingsStage $stage
           }
           ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/revision" -Checks @('ControlBindingsSmoke','MainMenuSmoke','SaveCompatibilitySmoke','SaveRevisionSmoke','SaveGameSmoke','UIInputLayoutSmoke','RevisionBalanceSmoke','WorldLootCapacitySmoke','CrewSystemSmoke','FieldServiceSmoke','TechCraftingSmoke','LootTablesSmoke','KesslerChainSmoke','CaptainProgressionSmoke','CaptainSpecializationSmoke','CaptainActiveSkillsSmoke','SkillDriveRecoverySmoke','SkillEditorSmoke','SpecializationStatsSmoke','MoneyGainFeedbackSmoke')
+      - name: Test enemy hit feedback
+        shell: pwsh
+        run: |
+          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/enemy-hit" -Checks @('EnemyHitFXSmoke')
       - name: Test cooperative session foundation
         shell: pwsh
         run: |
