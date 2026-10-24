@@ -177,7 +177,7 @@ jobs:
       - name: Test exclusive skill branches
         shell: pwsh
         run: |
-          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/exclusive-skills" -Checks @('ExclusiveSkillsSmoke','AlternativePrerequisitesSmoke','SkillEditorSmoke','SkillEditorReloadSmoke','CaptainSpecializationSmoke','SpecializationStatsSmoke','CaptainProgressionSmoke','CoopShipOwnershipSmoke')
+          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/exclusive-skills" -Checks @('ExclusiveSkillsSmoke','AlternativePrerequisitesSmoke','SkillBranchFocusSmoke','SkillEditorSmoke','SkillEditorReloadSmoke','CaptainSpecializationSmoke','SpecializationStatsSmoke','CaptainProgressionSmoke','CoopShipOwnershipSmoke')
       - name: Test cooperative session foundation
         shell: pwsh
         run: |
