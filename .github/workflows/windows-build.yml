@@ -160,7 +160,7 @@ jobs:
       - name: Test enemy hit feedback
         shell: pwsh
         run: |
-          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/enemy-hit" -Checks @('EnemyHitFXSmoke')
+          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/enemy-hit" -Checks @('EnemyHitFXSmoke','DeathFeedbackSmoke')
       - name: Test cooperative session foundation
         shell: pwsh
         run: |
