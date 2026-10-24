@@ -161,6 +161,10 @@ jobs:
         shell: pwsh
         run: |
           ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/enemy-hit" -Checks @('EnemyHitFXSmoke','DeathFeedbackSmoke')
+      - name: Test global weather console commands
+        shell: pwsh
+        run: |
+          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/weather-console" -Checks @('GlobalWeatherConsoleSmoke','DayNightConsoleSmoke')
       - name: Test cooperative session foundation
         shell: pwsh
         run: |
