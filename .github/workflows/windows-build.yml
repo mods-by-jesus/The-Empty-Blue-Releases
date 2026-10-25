@@ -161,7 +161,7 @@ jobs:
       - name: Test enemy hit feedback
         shell: pwsh
         run: |
-          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/enemy-hit" -Checks @('EnemyHitFXSmoke','DeathFeedbackSmoke')
+          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/enemy-hit" -Checks @('WorldRuntimeBudgetSmoke','FaunaActivitySmoke','EnemyHitFXSmoke','DeathFeedbackSmoke')
       - name: Test global weather console commands
         shell: pwsh
         run: |
