@@ -157,7 +157,7 @@ jobs:
           foreach ($stage in @('seed','verify','verify','verify','cleanup')) {
             ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/revision-settings" -Checks @('SettingsPersistenceSmoke') -SettingsStage $stage
           }
-          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/revision" -Checks @('TutorialGuideSmoke','ControlBindingsSmoke','MainMenuSmoke','SaveCompatibilitySmoke','SaveRevisionSmoke','SaveGameSmoke','UIInputLayoutSmoke','RevisionBalanceSmoke','WorldLootCapacitySmoke','CrewSystemSmoke','FieldServiceSmoke','TechCraftingSmoke','LootTablesSmoke','KesslerChainSmoke','CaptainProgressionSmoke','CaptainSpecializationSmoke','CaptainActiveSkillsSmoke','SkillDriveRecoverySmoke','SkillEditorSmoke','SpecializationStatsSmoke','MoneyGainFeedbackSmoke')
+          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/revision" -Checks @('PrologueSmoke','WorldSceneLayoutSmoke','TutorialGuideSmoke','ControlBindingsSmoke','MainMenuSmoke','SaveCompatibilitySmoke','SaveRevisionSmoke','SaveGameSmoke','UIInputLayoutSmoke','RevisionBalanceSmoke','WorldLootCapacitySmoke','CrewSystemSmoke','FieldServiceSmoke','TechCraftingSmoke','LootTablesSmoke','KesslerChainSmoke','CaptainProgressionSmoke','CaptainSpecializationSmoke','CaptainActiveSkillsSmoke','SkillDriveRecoverySmoke','SkillEditorSmoke','SpecializationStatsSmoke','MoneyGainFeedbackSmoke')
       - name: Test enemy hit feedback
         shell: pwsh
         run: |
@@ -177,7 +177,7 @@ jobs:
       - name: Test exclusive skill branches
         shell: pwsh
         run: |
-          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/exclusive-skills" -Checks @('ExclusiveSkillsSmoke','AlternativePrerequisitesSmoke','SkillBranchFocusSmoke','SkillEditorSmoke','SkillEditorReloadSmoke','CaptainSpecializationSmoke','SpecializationStatsSmoke','CaptainProgressionSmoke','CoopShipOwnershipSmoke')
+          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/exclusive-skills" -Checks @('ExclusiveSkillsSmoke','AlternativePrerequisitesSmoke','SkillBranchFocusSmoke','OrthogonalSkillLinksSmoke','SkillTreeFeedbackSmoke','SkillEditorSmoke','SkillEditorReloadSmoke','CaptainSpecializationSmoke','SpecializationStatsSmoke','CaptainProgressionSmoke','CoopShipOwnershipSmoke')
       - name: Test cooperative session foundation
         shell: pwsh
         run: |
