@@ -157,7 +157,7 @@ jobs:
           foreach ($stage in @('seed','verify','verify','verify','cleanup')) {
             ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/revision-settings" -Checks @('SettingsPersistenceSmoke') -SettingsStage $stage
           }
-          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/revision" -Checks @('PrologueSmoke','WorldSceneLayoutSmoke','TutorialGuideSmoke','ControlBindingsSmoke','MainMenuSmoke','SaveCompatibilitySmoke','SaveRevisionSmoke','SaveGameSmoke','UIInputLayoutSmoke','RevisionBalanceSmoke','WorldLootCapacitySmoke','CrewSystemSmoke','FieldServiceSmoke','TechCraftingSmoke','LootTablesSmoke','KesslerChainSmoke','CaptainProgressionSmoke','CaptainSpecializationSmoke','CaptainActiveSkillsSmoke','SkillDriveRecoverySmoke','SkillEditorSmoke','SpecializationStatsSmoke','MoneyGainFeedbackSmoke')
+          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/revision" -Checks @('PrologueSmoke','WorldSceneLayoutSmoke','TutorialGuideSmoke','ControlBindingsSmoke','MainMenuSmoke','SaveCompatibilitySmoke','SaveRevisionSmoke','SaveGameSmoke','UIInputLayoutSmoke','RevisionBalanceSmoke','WorldLootCapacitySmoke','CrewSystemSmoke','FieldServiceSmoke','TechCraftingSmoke','CauldronSmoke','TraderWeaponsLootSmoke','LootTablesSmoke','KesslerChainSmoke','CaptainProgressionSmoke','CaptainSpecializationSmoke','CaptainActiveSkillsSmoke','SkillDriveRecoverySmoke','SkillEditorSmoke','SpecializationStatsSmoke','MoneyGainFeedbackSmoke')
       - name: Test enemy hit feedback
         shell: pwsh
         run: |
