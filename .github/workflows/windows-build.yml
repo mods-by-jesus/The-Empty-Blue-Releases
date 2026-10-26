@@ -173,7 +173,7 @@ jobs:
       - name: Test treasure chest experience
         shell: pwsh
         run: |
-          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/chest-xp" -Checks @('ChestExperienceSmoke','DriftingChestSmoke','ChestAuthoringSmoke','CaptainProgressionSmoke')
+          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/chest-xp" -Checks @('ChestOpeningSmoke','ChestExperienceSmoke','DriftingChestSmoke','ChestAuthoringSmoke','CaptainProgressionSmoke')
       - name: Test exclusive skill branches
         shell: pwsh
         run: |
