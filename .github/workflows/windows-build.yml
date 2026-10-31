@@ -85,108 +85,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Test private statistics access and counters
+      - name: Validate source with the shared local and CI gate
         shell: pwsh
         run: |
-          node --test services/statistics/test/statistics.test.mjs
-          if ($LASTEXITCODE -ne 0) { throw 'Private statistics checks failed' }
-      - name: Test launcher update safety
-        shell: pwsh
-        run: |
-          ./scripts/distribution/TestReleaseDescription.ps1
-          ./scripts/distribution/TestItchPublishing.ps1
-          dotnet run --project launcher/tests/LauncherTests.csproj -c Release
-          if ($LASTEXITCODE -ne 0) { throw 'Launcher tests failed' }
-      - name: Import and validate Godot project
-        shell: pwsh
-        run: |
-          & $env:GODOT --headless --path . --editor --import 2>&1 | Tee-Object "$env:RUNNER_TEMP/import.log"
-          # On a clean checkout the project theme can load before its font is
-          # imported. Godot still completes asset import, but returns nonzero.
-          # Always run the strict second pass against the populated cache.
-          if ($LASTEXITCODE -ne 0) { Write-Warning "Initial import returned $LASTEXITCODE; validating after asset bootstrap" }
-          # First import can resolve scripts before new textures/fonts exist.
-          # Validate again against the completed import, without hiding persistent errors.
-          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/validate.log" -Arguments @('--headless','--path','.','--editor','--import')
-          if (Select-String -Path "$env:RUNNER_TEMP/validate.log" -Pattern 'SCRIPT ERROR:|Parse Error:|ERROR: Failed loading resource:') { throw 'Godot script/resource validation failed' }
-          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/app-icon.log" -Arguments @('--headless','--path','.','--script','res://scripts/tests/AppIconSmoke.gd')
-          if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/app-icon.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw "Application icon check failed (engine exit: $LASTEXITCODE)" }
-          if (!(Select-String -Path "$env:RUNNER_TEMP/app-icon.log" -Pattern 'APP_ICON_SMOKE_OK')) { throw 'Application icon check incomplete' }
-          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/script-dependencies.log" -Arguments @('--headless','--path','.','--script','res://scripts/tests/ScriptDependencySmoke.gd','--quit-after','120')
-          if (!(Select-String -Path "$env:RUNNER_TEMP/script-dependencies.log" -SimpleMatch 'SCRIPT_DEPENDENCY_SMOKE_OK')) { throw 'Script dependency check incomplete' }
-          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/display-settings.log" -Arguments @('--headless','--path','.','--script','res://scripts/tests/DisplaySettingsSmoke.gd','--quit-after','3600')
-          if (!(Select-String -Path "$env:RUNNER_TEMP/display-settings.log" -SimpleMatch 'DISPLAY_SETTINGS_SMOKE_OK')) { throw 'Display settings check incomplete' }
-          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/pause-settings.log" -Arguments @('--headless','--path','.','--script','res://scripts/tests/PauseSettingsMotionSmoke.gd')
-          if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/pause-settings.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw 'Pause settings check failed' }
-          if (!(Select-String -Path "$env:RUNNER_TEMP/pause-settings.log" -Pattern 'PAUSE_SETTINGS_MOTION_SMOKE_OK')) { throw 'Pause settings check incomplete' }
-          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/game-telemetry.log" -Arguments @('--headless','--path','.','--script','res://scripts/tests/GameTelemetrySmoke.gd')
-          if (!(Select-String -Path "$env:RUNNER_TEMP/game-telemetry.log" -Pattern 'GAME_TELEMETRY_SMOKE_OK')) { throw 'Game statistics client check incomplete' }
-          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/fishing-equipment.log" -Arguments @('--headless','--path','.','--scene','res://scenes/tests/FishingEquipmentSmoke.tscn')
-          if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/fishing-equipment.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw 'Fishing/equipment check failed' }
-          if (!(Select-String -Path "$env:RUNNER_TEMP/fishing-equipment.log" -Pattern 'FishingEquipmentSmoke PASS')) { throw 'Fishing/equipment check incomplete' }
-          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/twilight-ribbonfish.log" -Arguments @('--headless','--path','.','--scene','res://scenes/tests/TwilightRibbonfishSmoke.tscn')
-          if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/twilight-ribbonfish.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw 'Twilight Ribbonfish check failed' }
-          if (!(Select-String -Path "$env:RUNNER_TEMP/twilight-ribbonfish.log" -Pattern 'TWILIGHT_RIBBONFISH_SMOKE_OK')) { throw 'Twilight Ribbonfish check incomplete' }
-          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/towing-net.log" -Arguments @('--headless','--path','.','--scene','res://scenes/tests/TowingNetSmoke.tscn')
-          if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/towing-net.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw 'Towing net check failed' }
-          if (!(Select-String -Path "$env:RUNNER_TEMP/towing-net.log" -Pattern 'TowingNetSmoke PASS')) { throw 'Towing net check incomplete' }
-          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/simultaneous-fishing.log" -Arguments @('--headless','--path','.','--scene','res://scenes/tests/SimultaneousFishingSmoke.tscn')
-          if (!(Select-String -Path "$env:RUNNER_TEMP/simultaneous-fishing.log" -Pattern 'SimultaneousFishingSmoke PASS')) { throw 'Simultaneous fishing check incomplete' }
-          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/crew-starvation.log" -Arguments @('--headless','--path','.','--scene','res://scenes/tests/CrewStarvationSmoke.tscn')
-          if (!(Select-String -Path "$env:RUNNER_TEMP/crew-starvation.log" -Pattern 'CrewStarvationSmoke PASS')) { throw 'Crew starvation check incomplete' }
-          ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath "$env:RUNNER_TEMP/equipment-ui.log" -Arguments @('--headless','--path','.','--scene','res://scenes/tests/EquipmentInterfaceSmoke.tscn')
-          if ($LASTEXITCODE -ne 0 -or (Select-String -Path "$env:RUNNER_TEMP/equipment-ui.log" -Pattern 'SCRIPT ERROR:|Parse Error:')) { throw 'Equipment interface check failed' }
-          if (!(Select-String -Path "$env:RUNNER_TEMP/equipment-ui.log" -Pattern 'EquipmentInterfaceSmoke PASS')) { throw 'Equipment interface check incomplete' }
-          $performanceChecks = @{
-            'LoadedCrewDeckPerformanceSmoke' = 'LOADED_CREW_DECK_PERFORMANCE_SMOKE_OK'
-            'WarehousePerformanceSmoke' = 'WAREHOUSE_PERFORMANCE_SMOKE_OK'
-            'PropellerMaskPerformanceSmoke' = 'PROPELLER_MASK_PERFORMANCE_SMOKE_OK'
-            'RuntimeHotspotsSmoke' = 'RUNTIME_HOTSPOTS_SMOKE_OK'
-            'CrewWorkerQuerySmoke' = 'CREW_WORKER_QUERY_SMOKE_OK'
-            'WindMapCacheSmoke' = 'WIND_MAP_CACHE_SMOKE_OK'
-          }
-          foreach ($check in $performanceChecks.GetEnumerator()) {
-            $log = "$env:RUNNER_TEMP/$($check.Key).log"
-            ./scripts/distribution/InvokeGodotChecked.ps1 -GodotPath $env:GODOT -LogPath $log -Arguments @('--headless','--path','.','--scene',"res://scenes/tests/$($check.Key).tscn")
-            if (!(Select-String -Path $log -Pattern $check.Value)) { throw "Performance regression check incomplete: $($check.Key)" }
-          }
-      - name: Test save compatibility, controls and first revision
-        shell: pwsh
-        run: |
-          # Five separate processes: seed, three real restarts and cleanup.
-          foreach ($stage in @('seed','verify','verify','verify','cleanup')) {
-            ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/revision-settings" -Checks @('SettingsPersistenceSmoke') -SettingsStage $stage
-          }
-          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/revision" -Checks @('PrologueSmoke','WorldSceneLayoutSmoke','JungleRegionSmoke','TutorialGuideSmoke','ControlBindingsSmoke','MainMenuSmoke','SaveCompatibilitySmoke','SaveRevisionSmoke','SaveGameSmoke','VoyageAutosaveSmoke','CaptainLoadoutSmoke','RevisionPresentationSmoke','UIInputLayoutSmoke','RevisionBalanceSmoke','WorldLootCapacitySmoke','CrewSystemSmoke','FieldServiceSmoke','TechCraftingSmoke','CauldronSmoke','TulipSmoke','PuffballSmoke','NeedlerSmoke','InertialTurningSmoke','ShipDashVisualSmoke','RamWeaponSmoke','WeaponTooltipHoverSmoke','LocalizationSmoke','ArborPropellerSmoke','PropellerAirWakeSmoke','TraderWeaponsLootSmoke','LootTablesSmoke','KesslerChainSmoke','CaptainProgressionSmoke','CaptainSpecializationSmoke','CaptainActiveSkillsSmoke','SkillDriveRecoverySmoke','SkillEditorSmoke','SpecializationStatsSmoke','MoneyGainFeedbackSmoke')
-      - name: Test enemy hit feedback
-        shell: pwsh
-        run: |
-          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/enemy-hit" -Checks @('WorldRuntimeBudgetSmoke','FaunaActivitySmoke','EnemyHitFXSmoke','DeathFeedbackSmoke')
-      - name: Test global weather console commands
-        shell: pwsh
-        run: |
-          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/weather-console" -Checks @('GlobalWeatherConsoleSmoke','DayNightConsoleSmoke')
-      - name: Test free camera markers and console help
-        shell: pwsh
-        run: |
-          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/freecam" -Checks @('FreeCameraMarkersSmoke','ConsoleCompletionSmoke','DevConsoleSmoke','WindMapCacheSmoke')
-      - name: Test treasure chest experience
-        shell: pwsh
-        run: |
-          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/chest-xp" -Checks @('ChestOpeningSmoke','ChestExperienceSmoke','DriftingChestSmoke','ChestAuthoringSmoke','CaptainProgressionSmoke')
-      - name: Test exclusive skill branches
-        shell: pwsh
-        run: |
-          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/exclusive-skills" -Checks @('ExclusiveSkillsSmoke','AlternativePrerequisitesSmoke','SkillBranchFocusSmoke','OrthogonalSkillLinksSmoke','SkillTreeFeedbackSmoke','SkillEditorSmoke','SkillEditorReloadSmoke','CaptainSpecializationSmoke','SpecializationStatsSmoke','CaptainProgressionSmoke','CoopShipOwnershipSmoke')
-      - name: Test cooperative session foundation
-        shell: pwsh
-        run: |
-          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/coop" -Checks @('CoopFoundationSmoke','CoopShipOwnershipSmoke','BoardingSmoke','CrewMoodSmoke','CrewRelationshipsSmoke')
-          ./scripts/distribution/TestCoopTransport.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/coop-processes"
-      - name: Test non-destructive icon presentation
-        shell: pwsh
-        run: |
-          ./scripts/distribution/TestFirstRevision.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/icon-palette" -Checks @('IconPaletteSmoke','DriftingChestSmoke','ChestAuthoringSmoke')
+          ./scripts/distribution/InvokeSourceChecks.ps1 -GodotPath $env:GODOT -LogDirectory "$env:RUNNER_TEMP/source-checks"
+      - name: Preserve source validation diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-validation-logs
+          path: ${{ runner.temp }}/source-checks
+          if-no-files-found: ignore
       - name: Export Windows game
         shell: pwsh
         run: |
